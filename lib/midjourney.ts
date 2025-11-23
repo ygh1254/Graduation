@@ -269,7 +269,45 @@ export async function upscaleImage(
 
     console.log('U2 업스케일 요청 시작');
 
-    // U2 버튼 클릭 (custom_id는 "MJ::JOB::upsample::2::message_id" 형식)
+    // 실제 메시지에서 U2 버튼의 custom_id를 가져와야 함
+    const messagesResponse = await axios.get(
+      `${DISCORD_API_BASE}/channels/${channelId}/messages?limit=20`,
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
+
+    const messages = messagesResponse.data;
+    let buttonCustomId: string | null = null;
+
+    // 해당 messageId를 가진 메시지 찾기
+    for (const message of messages) {
+      if (message.id === messageId && message.components) {
+        // U2 버튼 찾기 (components 안에서)
+        for (const row of message.components) {
+          if (row.components) {
+            for (const button of row.components) {
+              // U2 버튼 찾기 (label이 "U2"인 버튼)
+              if (button.label === 'U2') {
+                buttonCustomId = button.custom_id;
+                console.log('✅ U2 버튼 custom_id 발견:', buttonCustomId);
+                break;
+              }
+            }
+          }
+          if (buttonCustomId) break;
+        }
+      }
+      if (buttonCustomId) break;
+    }
+
+    if (!buttonCustomId) {
+      throw new Error('U2 버튼을 찾을 수 없습니다.');
+    }
+
+    // U2 버튼 클릭
     await axios.post(
       `${DISCORD_API_BASE}/interactions`,
       {
@@ -280,7 +318,7 @@ export async function upscaleImage(
         session_id: generateSessionId(),
         data: {
           component_type: 2, // BUTTON
-          custom_id: `MJ::JOB::upsample::2::${messageId}`,
+          custom_id: buttonCustomId,
         },
         nonce: generateNonce(),
       },
