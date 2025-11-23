@@ -43,7 +43,14 @@ app.post('/print', async (req, res) => {
     console.log('📨 POST /print 요청 도착');
     console.log('📩 요청 받은 데이터:', req.body);
 
-    const { imageUrl, weight } = req.body;
+    const {
+        imageUrl,
+        weight,
+        width = 832,                    // 기본값: 832px (71mm @ 300 DPI)
+        maintainAspectRatio = true,     // 기본값: 비율 유지
+        quality = 90,                   // 기본값: 90% 품질
+        grayscale = true                // 기본값: 흑백 변환
+    } = req.body;
 
     if (!imageUrl || !weight) {
         console.log('❌ 검증 실패 - imageUrl:', imageUrl, 'weight:', weight);
@@ -55,6 +62,7 @@ app.post('/print', async (req, res) => {
 
     try {
         console.log('🖨️ 이미지 다운로드 시작:', imageUrl);
+        console.log('⚙️ 인쇄 설정:', { width, maintainAspectRatio, quality, grayscale });
 
         // 이미지 다운로드
         const response = await axios.get(imageUrl, {
@@ -67,13 +75,21 @@ app.post('/print', async (req, res) => {
 
         console.log('🖼️ 이미지 처리 및 저장 중:', tempFile);
 
-        // 이미지를 프린터에 맞게 변환 (58mm 너비, 384픽셀)
-        await sharp(response.data)
-            .resize(384, null, {
-                fit: 'inside',
+        // Sharp 이미지 처리 파이프라인 구성
+        let sharpPipeline = sharp(response.data)
+            .resize(width, null, {
+                fit: maintainAspectRatio ? 'inside' : 'fill',
                 withoutEnlargement: false,
-            })
-            .grayscale()
+            });
+
+        // 흑백 변환 옵션
+        if (grayscale) {
+            sharpPipeline = sharpPipeline.grayscale();
+        }
+
+        // PNG 품질 설정 및 파일 저장
+        await sharpPipeline
+            .png({ quality: quality, compressionLevel: 6 })
             .toFile(tempFile);
 
         console.log('🖨️ 시스템 프린트 명령 실행 중...');

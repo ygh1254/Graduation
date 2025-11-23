@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateMidjourneyPrompt } from '@/lib/claude';
-import { generateImage, downloadImage } from '@/lib/midjourney';
+import { generateImage, downloadImage, upscaleImage } from '@/lib/midjourney';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,35 +21,45 @@ export async function POST(request: NextRequest) {
     const midjourneyPrompt = await generateMidjourneyPrompt(number);
     console.log('생성된 프롬프트:', midjourneyPrompt);
 
-    // 2단계: Midjourney API로 이미지 생성
+    // 2단계: Midjourney API로 이미지 생성 (4장 그리드)
     console.log('Midjourney API로 이미지 생성 중...');
     const imageResult = await generateImage(midjourneyPrompt);
 
     if (!imageResult.success) {
       return NextResponse.json({
-        success: true, // 프롬프트는 생성됨
+        success: false,
         prompt: midjourneyPrompt,
         error: `이미지 생성 실패: ${imageResult.error}`,
       });
     }
 
-    // 3단계: 이미지 다운로드 및 저장
-    let localImagePath: string | undefined;
-    if (imageResult.imageUrl) {
-      try {
-        const filename = `${Date.now()}.png`;
-        localImagePath = await downloadImage(imageResult.imageUrl, filename);
-        console.log('이미지 저장 완료:', localImagePath);
-      } catch (error) {
-        console.error('이미지 저장 실패:', error);
-        // 이미지 저장 실패해도 원본 URL은 반환
-      }
+    // 3단계: U2 업스케일 (2번 이미지 고해상도로 업스케일)
+    console.log('U2 업스케일 시작 (2번 이미지)...');
+    const channelId = process.env.DISCORD_CHANNEL_ID;
+
+    if (!channelId || !imageResult.messageId) {
+      return NextResponse.json({
+        success: false,
+        error: 'Discord 채널 ID 또는 메시지 ID가 없습니다.',
+      });
     }
+
+    const upscaleResult = await upscaleImage(imageResult.messageId, channelId);
+
+    if (!upscaleResult.success || !upscaleResult.imageUrl) {
+      return NextResponse.json({
+        success: false,
+        prompt: midjourneyPrompt,
+        error: `업스케일 실패: ${upscaleResult.error}`,
+      });
+    }
+
+    console.log('✅ U2 업스케일 완료:', upscaleResult.imageUrl);
 
     return NextResponse.json({
       success: true,
       prompt: midjourneyPrompt,
-      imageUrl: imageResult.imageUrl, // 프린터 서버가 다운로드할 수 있도록 Discord CDN URL 사용
+      imageUrl: upscaleResult.imageUrl, // U2 업스케일된 고해상도 이미지 URL
       messageId: imageResult.messageId,
     });
   } catch (error) {

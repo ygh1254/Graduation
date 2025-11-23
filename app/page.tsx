@@ -17,6 +17,12 @@ export default function Home() {
   const [printing, setPrinting] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
 
+  // 인쇄 설정 (71mm x 426mm @ 300 DPI)
+  const [printWidth, setPrintWidth] = useState<number>(832); // 71mm = 832px @ 300 DPI
+  const [maintainAspectRatio, setMaintainAspectRatio] = useState<boolean>(true);
+  const [printQuality, setPrintQuality] = useState<number>(90);
+  const [grayscale, setGrayscale] = useState<boolean>(true);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -49,6 +55,10 @@ export default function Home() {
           const printPayload = {
             imageUrl: data.imageUrl,
             weight: selectedNumber,
+            width: printWidth,
+            maintainAspectRatio: maintainAspectRatio,
+            quality: printQuality,
+            grayscale: grayscale,
           };
           console.log('📦 프린트 요청 데이터:', printPayload);
 
