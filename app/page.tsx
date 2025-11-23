@@ -23,6 +23,7 @@ export default function Home() {
     setResult(null);
 
     try {
+      // 1. 이미지 생성
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -35,6 +36,41 @@ export default function Home() {
 
       const data = await response.json();
       setResult(data);
+
+      // 2. 이미지 생성 성공 시 자동으로 프린트 시작
+      if (data.success && data.imageUrl) {
+        console.log('✅ 이미지 생성 완료, 자동 프린트 시작...');
+        setPrinting(true);
+
+        try {
+          // Express 서버(포트 3001)로 프린트 요청
+          const printResponse = await fetch('http://localhost:3001/print', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageUrl: data.imageUrl,
+              weight: selectedNumber,
+            }),
+          });
+
+          const printData = await printResponse.json();
+
+          if (printData.success) {
+            console.log('✅ 프린트 완료!');
+            alert('이미지 생성 및 인쇄가 완료되었습니다!');
+          } else {
+            console.error('❌ 프린트 실패:', printData.error);
+            alert('인쇄 실패: ' + printData.error);
+          }
+        } catch (printError) {
+          console.error('❌ 프린트 오류:', printError);
+          alert('인쇄 중 오류 발생: ' + (printError as Error).message);
+        } finally {
+          setPrinting(false);
+        }
+      }
     } catch (error) {
       setResult({
         success: false,
@@ -45,39 +81,6 @@ export default function Home() {
     }
   };
 
-  const handlePrint = async () => {
-    if (!result?.messageId) {
-      alert('메시지 ID가 없습니다.');
-      return;
-    }
-
-    setPrinting(true);
-
-    try {
-      const response = await fetch('/api/print', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messageId: result.messageId,
-          weight: selectedNumber,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert('인쇄가 완료되었습니다!');
-      } else {
-        alert('인쇄 실패: ' + data.error);
-      }
-    } catch (error) {
-      alert('인쇄 오류: ' + (error as Error).message);
-    } finally {
-      setPrinting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4">
@@ -180,39 +183,33 @@ export default function Home() {
                       />
                     </div>
 
-                    {result.messageId && (
-                      <button
-                        onClick={handlePrint}
-                        disabled={printing}
-                        className="mt-6 w-full bg-gradient-to-r from-green-600 to-teal-600 text-white py-3 px-6 rounded-xl font-semibold text-lg hover:from-green-700 hover:to-teal-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                      >
-                        {printing ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <svg
-                              className="animate-spin h-5 w-5"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                                fill="none"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              />
-                            </svg>
-                            인쇄 중...
+                    {printing && (
+                      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                          <svg
+                            className="animate-spin h-5 w-5 text-blue-600"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                              fill="none"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          <span className="text-blue-800 font-semibold">
+                            🖨️ 프린터로 출력 중...
                           </span>
-                        ) : (
-                          '🖨️ 2번 이미지 인쇄하기'
-                        )}
-                      </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
