@@ -95,7 +95,12 @@ app.post('/print', async (req, res) => {
         console.log('🖨️ 시스템 프린트 명령 실행 중...');
 
         // macOS lp 명령어로 프린트 (시스템 드라이버 사용)
-        exec(`lp -d "${PRINTER_NAME}" "${tempFile}"`, (error, stdout, stderr) => {
+        // 용지 크기: 71mm x 426mm (2.8 x 16.77 inches)
+        // fit-to-page: 이미지를 용지에 맞춤
+        const lpCommand = `lp -d "${PRINTER_NAME}" -o fit-to-page -o media=Custom.71x426mm "${tempFile}"`;
+        console.log('🖨️ 실행 명령:', lpCommand);
+
+        exec(lpCommand, (error, stdout, stderr) => {
             // 임시 파일 삭제
             try {
                 fs.unlinkSync(tempFile);
