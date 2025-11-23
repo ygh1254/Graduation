@@ -149,16 +149,15 @@ app.post('/print', async (req, res) => {
         });
 
         // 이미지를 프린터에 맞게 변환 (58mm 너비, 384픽셀)
-        const imageBuffer = await sharp(response.data)
+        // PNG 형식으로 저장
+        const processedImage = await sharp(response.data)
             .resize(384, null, {
                 fit: 'inside',
                 withoutEnlargement: false,
             })
             .grayscale()
-            .raw()
-            .toBuffer({ resolveWithObject: true });
-
-        const { data, info } = imageBuffer;
+            .png()
+            .toBuffer();
 
         // ESC/POS 명령어
         const commands = {
@@ -186,9 +185,8 @@ app.post('/print', async (req, res) => {
             commands.NEWLINE
         );
 
-        // 이미지 데이터를 ESC/POS 비트맵 형식으로 변환
-        const bitmap = convertToBitmap(data, info.width, info.height);
-        buffers.push(bitmap);
+        // 이미지를 바이너리 데이터로 직접 전송 (프린터가 PNG 처리 가능한 경우)
+        buffers.push(processedImage);
 
         // 푸터
         buffers.push(
@@ -231,51 +229,68 @@ app.post('/print', async (req, res) => {
     }
 });
 
-// 이미지 데이터를 ESC/POS 비트맵 형식으로 변환
+// 이미지 데이터를 ESC/POS 비트맵 형식으로 변환 (24-dot 방식)
 function convertToBitmap(data, width, height) {
-    const bitmap = [];
+    const lines = [];
 
-    // ESC * m nL nH d1...dk 형식
-    bitmap.push(0x1b, 0x2a, 33); // ESC * 33 (24-dot double-density)
-
-    const nL = width % 256;
-    const nH = Math.floor(width / 256);
-    bitmap.push(nL, nH);
-
+    // 24픽셀 단위로 처리
     for (let y = 0; y < height; y += 24) {
+        const line = [];
+
+        // ESC * 33: 24-dot double-density
+        line.push(0x1b, 0x2a, 33);
+
+        // 너비 (픽셀 단위)
+        const nL = width % 256;
+        const nH = Math.floor(width / 256);
+        line.push(nL, nH);
+
+        // 각 열(x)에 대해 24개 픽셀을 3바이트로 압축
         for (let x = 0; x < width; x++) {
             let byte1 = 0, byte2 = 0, byte3 = 0;
 
+            // 첫 8픽셀
             for (let k = 0; k < 8; k++) {
                 const pixelY = y + k;
                 if (pixelY < height) {
                     const pixel = data[pixelY * width + x];
-                    if (pixel < 128) byte1 |= 1 << (7 - k);
+                    if (pixel < 128) {
+                        byte1 |= (1 << (7 - k));
+                    }
                 }
             }
 
+            // 다음 8픽셀
             for (let k = 0; k < 8; k++) {
                 const pixelY = y + k + 8;
                 if (pixelY < height) {
                     const pixel = data[pixelY * width + x];
-                    if (pixel < 128) byte2 |= 1 << (7 - k);
+                    if (pixel < 128) {
+                        byte2 |= (1 << (7 - k));
+                    }
                 }
             }
 
+            // 마지막 8픽셀
             for (let k = 0; k < 8; k++) {
                 const pixelY = y + k + 16;
                 if (pixelY < height) {
                     const pixel = data[pixelY * width + x];
-                    if (pixel < 128) byte3 |= 1 << (7 - k);
+                    if (pixel < 128) {
+                        byte3 |= (1 << (7 - k));
+                    }
                 }
             }
 
-            bitmap.push(byte1, byte2, byte3);
+            line.push(byte1, byte2, byte3);
         }
-        bitmap.push(0x0a); // 줄바꿈
+
+        // 줄바꿈
+        line.push(0x0a);
+        lines.push(Buffer.from(line));
     }
 
-    return Buffer.from(bitmap);
+    return lines;
 }
 
 app.listen(3001, () => {
