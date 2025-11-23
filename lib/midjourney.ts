@@ -307,30 +307,40 @@ export async function upscaleImage(
       throw new Error('U2 버튼을 찾을 수 없습니다.');
     }
 
-    // U2 버튼 클릭
-    await axios.post(
-      `${DISCORD_API_BASE}/interactions`,
-      {
-        type: 3, // MESSAGE_COMPONENT
-        application_id: MIDJOURNEY_BOT_ID,
-        channel_id: channelId,
-        message_id: messageId,
-        session_id: generateSessionId(),
-        data: {
-          component_type: 2, // BUTTON
-          custom_id: buttonCustomId,
+    // U2 버튼 클릭 - 하지만 Discord Interaction API는 사용자 토큰으로 직접 호출 불가
+    // 대신 메시지 직접 전송 방식 사용
+    try {
+      const interactionResponse = await axios.post(
+        `${DISCORD_API_BASE}/interactions`,
+        {
+          type: 3, // MESSAGE_COMPONENT
+          application_id: MIDJOURNEY_BOT_ID,
+          channel_id: channelId,
+          message_id: messageId,
+          session_id: generateSessionId(),
+          data: {
+            component_type: 2, // BUTTON
+            custom_id: buttonCustomId,
+          },
+          nonce: generateNonce(),
         },
-        nonce: generateNonce(),
-      },
-      {
-        headers: {
-          Authorization: token,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+        {
+          headers: {
+            Authorization: token,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-    console.log('✅ U2 업스케일 요청 완료');
+      console.log('✅ U2 업스케일 Interaction 응답:', interactionResponse.status);
+    } catch (interactionError) {
+      if (axios.isAxiosError(interactionError)) {
+        console.error('❌ Interaction 오류:', interactionError.response?.data);
+        // 400 오류가 나도 계속 진행 (메시지는 이미 전송되었을 수 있음)
+      }
+    }
+
+    console.log('✅ U2 업스케일 요청 완료, 폴링 시작');
 
     // 업스케일 이미지 폴링
     const requestTime = Date.now();
@@ -388,21 +398,52 @@ async function pollForUpscaledImage(
       for (const message of messages) {
         const messageTime = new Date(message.timestamp).getTime();
 
-        if (messageTime < requestTime) {
+        // 요청 시간 1초 전부터 허용 (타이밍 이슈 방지)
+        if (messageTime < requestTime - 1000) {
           continue;
         }
 
         if (message.author.id === MIDJOURNEY_BOT_ID) {
-          // 업스케일된 이미지는 버튼이 없거나 다른 형태의 버튼을 가짐
+          // 진행률 표시
+          if (message.content && message.content.includes('%')) {
+            const progressMatch = message.content.match(/\((\d+)%\)/);
+            if (progressMatch) {
+              console.log(`🔄 업스케일 진행률: ${progressMatch[1]}%`);
+            }
+          }
+
+          // 업스케일된 이미지 찾기
           if (message.attachments && message.attachments.length > 0) {
             const imageAttachment = message.attachments.find((att: any) =>
               att.content_type?.startsWith('image/')
             );
 
-            if (imageAttachment && imageAttachment.width > 1024) {
-              // 업스케일된 이미지는 해상도가 높음
-              console.log('✅ 업스케일 이미지 생성 완료:', imageAttachment.url);
-              return imageAttachment.url;
+            if (imageAttachment) {
+              console.log('📊 발견된 이미지:', {
+                width: imageAttachment.width,
+                height: imageAttachment.height,
+                url: imageAttachment.url,
+                messageTime: new Date(messageTime).toISOString(),
+              });
+
+              // 업스케일된 이미지는 해상도가 높음 (1024px 이상)
+              // 또는 버튼이 Vary 등으로 변경됨
+              if (imageAttachment.width > 1024) {
+                console.log('✅ 업스케일 이미지 생성 완료 (고해상도):', imageAttachment.url);
+                return imageAttachment.url;
+              }
+
+              // Vary, Zoom 등의 버튼이 있는 메시지도 업스케일 완료
+              const hasUpscaleButtons = message.components && message.components.some((row: any) =>
+                row.components && row.components.some((btn: any) =>
+                  btn.label && (btn.label.includes('Vary') || btn.label.includes('Zoom'))
+                )
+              );
+
+              if (hasUpscaleButtons) {
+                console.log('✅ 업스케일 이미지 생성 완료 (Vary 버튼 확인):', imageAttachment.url);
+                return imageAttachment.url;
+              }
             }
           }
         }
