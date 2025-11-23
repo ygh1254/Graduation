@@ -116,7 +116,13 @@ app.post('/print', async (req, res) => {
 
     const { imageUrl, weight } = req.body;
 
+    console.log('🔍 imageUrl 타입:', typeof imageUrl);
+    console.log('🔍 imageUrl 값:', imageUrl);
+    console.log('🔍 imageUrl 길이:', imageUrl ? imageUrl.length : 'undefined');
+    console.log('🔍 weight 값:', weight);
+
     if (!imageUrl || !weight) {
+        console.log('❌ 검증 실패 - imageUrl:', imageUrl, 'weight:', weight);
         return res.status(400).json({
             success: false,
             error: '이미지 URL과 무게가 필요합니다.'

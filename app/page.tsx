@@ -40,19 +40,24 @@ export default function Home() {
       // 2. 이미지 생성 성공 시 자동으로 프린트 시작
       if (data.success && data.imageUrl) {
         console.log('✅ 이미지 생성 완료, 자동 프린트 시작...');
+        console.log('📤 전송할 이미지 URL:', data.imageUrl);
+        console.log('📤 전송할 무게:', selectedNumber);
         setPrinting(true);
 
         try {
           // Express 서버(포트 3001)로 프린트 요청
+          const printPayload = {
+            imageUrl: data.imageUrl,
+            weight: selectedNumber,
+          };
+          console.log('📦 프린트 요청 데이터:', printPayload);
+
           const printResponse = await fetch('http://localhost:3001/print', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              imageUrl: data.imageUrl,
-              weight: selectedNumber,
-            }),
+            body: JSON.stringify(printPayload),
           });
 
           const printData = await printResponse.json();

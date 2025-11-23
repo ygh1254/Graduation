@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       prompt: midjourneyPrompt,
-      imageUrl: localImagePath || imageResult.imageUrl,
+      imageUrl: imageResult.imageUrl, // 프린터 서버가 다운로드할 수 있도록 Discord CDN URL 사용
       messageId: imageResult.messageId,
     });
   } catch (error) {
