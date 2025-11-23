@@ -18,7 +18,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('.'));
 
-const PRINTER_NAME = 'BIXOLON SRP-330II';
+const PRINTER_NAME = 'BIXOLON_SRP_330II';
 
 // 프린터 상태 확인
 app.get('/printer-status', async (req, res) => {
