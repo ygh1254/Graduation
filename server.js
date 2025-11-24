@@ -59,9 +59,8 @@ app.post('/print', async (req, res) => {
         grayscale = true                // 기본값: 흑백 변환
     } = req.body;
 
-    // 밀리미터를 픽셀로 변환 (180 DPI = 프린터 실제 해상도)
-    // 71mm @ 180 DPI = 504px
-    const width = Math.round(widthMm * 180 / 25.4);
+    // width를 밀리미터 그대로 사용 (Sharp resize 안 함, 프린터가 직접 처리)
+    const width = widthMm;
 
     if (!imageUrl || !weight) {
         console.log('❌ 검증 실패 - imageUrl:', imageUrl, 'weight:', weight);
@@ -86,19 +85,15 @@ app.post('/print', async (req, res) => {
 
         console.log('🖼️ 이미지 처리 및 저장 중:', tempFile);
 
-        // Sharp 이미지 처리 파이프라인 구성
-        let sharpPipeline = sharp(response.data)
-            .resize(width, null, {
-                fit: maintainAspectRatio ? 'inside' : 'fill',
-                withoutEnlargement: false,
-            });
+        // Sharp 이미지 처리 파이프라인 구성 (리사이즈 없이 원본 크기 유지)
+        let sharpPipeline = sharp(response.data);
 
         // 흑백 변환 옵션
         if (grayscale) {
             sharpPipeline = sharpPipeline.grayscale();
         }
 
-        // PNG 품질 설정 및 파일 저장
+        // PNG 품질 설정 및 파일 저장 (원본 크기 그대로)
         await sharpPipeline
             .png({ quality: quality, compressionLevel: 6 })
             .toFile(tempFile);
@@ -108,11 +103,12 @@ app.post('/print', async (req, res) => {
         // OS별 프린트 명령어
         let printCommand;
         if (isWindows) {
-            // Windows: PowerShell로 프린터에 RAW 데이터 전송
-            // Sharp에서 이미 71mm(504px @ 180 DPI)로 리사이즈 완료
-            // 프린터가 실제 크기로 인쇄하도록 설정
+            // Windows: PowerShell로 프린터에 이미지 전송 (원본 크기 유지, 71mm 폭으로 출력)
+            // 용지 폭을 71mm로 설정하여 프린터가 자동으로 스케일링
             const escapedPath = tempFile.replace(/\\/g, '\\\\');
-            printCommand = `powershell -Command "Add-Type -AssemblyName System.Drawing; Add-Type -AssemblyName System.Printing; $img = [System.Drawing.Image]::FromFile('${escapedPath}'); $printDoc = New-Object System.Drawing.Printing.PrintDocument; $printDoc.PrinterSettings.PrinterName = '${PRINTER_NAME}'; $printDoc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0,0,0,0); $printDoc.add_PrintPage({ param($sender, $ev); $ev.Graphics.DrawImage($img, 0, 0, $img.Width, $img.Height); $ev.HasMorePages = $false }); $printDoc.Print(); $img.Dispose()"`;
+            // 100분의 1인치 단위로 71mm = 279 (71mm / 25.4mm * 100)
+            const widthIn100thInch = Math.round(widthMm / 25.4 * 100);
+            printCommand = `powershell -Command "Add-Type -AssemblyName System.Drawing; Add-Type -AssemblyName System.Printing; $img = [System.Drawing.Image]::FromFile('${escapedPath}'); $printDoc = New-Object System.Drawing.Printing.PrintDocument; $printDoc.PrinterSettings.PrinterName = '${PRINTER_NAME}'; $printDoc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0,0,0,0); $printDoc.DefaultPageSettings.PaperSize = New-Object System.Drawing.Printing.PaperSize('Custom', ${widthIn100thInch}, 1600); $printDoc.add_PrintPage({ param($sender, $ev); $aspectRatio = $img.Height / $img.Width; $printWidth = ${widthIn100thInch}; $printHeight = $printWidth * $aspectRatio; $ev.Graphics.DrawImage($img, 0, 0, $printWidth, $printHeight); $ev.HasMorePages = $false }); $printDoc.Print(); $img.Dispose()"`;
         } else {
             // macOS/Linux: lp 명령어로 프린트
             // 용지 크기는 동적으로 설정 (widthMm x 자동 높이)
