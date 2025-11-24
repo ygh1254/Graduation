@@ -159,7 +159,7 @@ async function pollForImage(
   token: string,
   requestTime: number
 ): Promise<{ imageUrl: string; messageId: string } | null> {
-  const maxAttempts = 60; // 최대 5분 (5초 * 60)
+  const maxAttempts = 120; // 최대 10분 (5초 * 120)
   const pollInterval = 5000; // 5초
 
   for (let i = 0; i < maxAttempts; i++) {
@@ -377,8 +377,8 @@ async function pollForUpscaledImage(
   token: string,
   requestTime: number
 ): Promise<string | null> {
-  const maxAttempts = 60;
-  const pollInterval = 5000;
+  const maxAttempts = 120; // 최대 10분 (5초 * 120)
+  const pollInterval = 5000; // 5초
 
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise((resolve) => setTimeout(resolve, pollInterval));
