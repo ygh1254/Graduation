@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 코드 생성기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        #qrcode {
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .download-btn {
+            background: #28a745;
+            margin-top: 20px;
+            display: none;
+        }
+        .download-btn:hover {
+            background: #218838;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 QR 코드 생성기</h1>
+        <p class="subtitle">Vercel URL을 입력하여 QR 코드를 생성하세요</p>
+
+        <input
+            type="text"
+            id="urlInput"
+            placeholder="https://your-project.vercel.app"
+            value="https://graduation-mu-three.vercel.app/">
+
+        <button onclick="generateQR()">QR 코드 생성</button>
+
+        <div id="qrcode"></div>
+
+        <button class="download-btn" id="downloadBtn" onclick="downloadQR()">
+            📥 QR 코드 다운로드
+        </button>
+
+        <div class="info">
+            <strong>💡 사용 방법:</strong><br>
+            1. Vercel 프로덕션 URL을 입력하세요<br>
+            2. "QR 코드 생성" 버튼을 클릭하세요<br>
+            3. 생성된 QR 코드를 다운로드하세요
+        </div>
+    </div>
+
+    <script>
+        let qrcodeInstance = null;
+
+        function generateQR() {
+            const url = document.getElementById('urlInput').value.trim();
+
+            if (!url) {
+                alert('URL을 입력해주세요!');
+                return;
+            }
+
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                alert('올바른 URL을 입력해주세요 (http:// 또는 https://로 시작)');
+                return;
+            }
+
+            // 기존 QR 코드 제거
+            document.getElementById('qrcode').innerHTML = '';
+
+            // 새 QR 코드 생성
+            qrcodeInstance = new QRCode(document.getElementById('qrcode'), {
+                text: url,
+                width: 300,
+                height: 300,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // 다운로드 버튼 표시
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) {
+                alert('먼저 QR 코드를 생성해주세요!');
+                return;
+            }
+
+            // Canvas를 이미지로 변환하여 다운로드
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = 'graduation-qr-code.png';
+                link.href = url;
+                link.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        // Enter 키로 QR 코드 생성
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                generateQR();
+            }
+        });
+    </script>
+</body>
+</html>

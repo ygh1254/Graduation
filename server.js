@@ -136,7 +136,8 @@ app.post('/print', async (req, res) => {
     }
 });
 
-app.listen(3001, () => {
-    console.log('프린터 서버가 http://localhost:3001 에서 실행 중입니다.');
+app.listen(3001, '0.0.0.0', () => {
+    console.log('프린터 서버가 http://0.0.0.0:3001 에서 실행 중입니다.');
     console.log('시스템 프린트 드라이버 사용: ' + PRINTER_NAME);
+    console.log('로컬 네트워크에서 접근 가능 (같은 Wi-Fi 필요)');
 });
