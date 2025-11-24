@@ -74,14 +74,11 @@ export default function Home() {
 
           if (printData.success) {
             console.log('✅ 프린트 완료!');
-            alert('이미지 생성 및 인쇄가 완료되었습니다!');
           } else {
             console.error('❌ 프린트 실패:', printData.error);
-            alert('인쇄 실패: ' + printData.error);
           }
         } catch (printError) {
           console.error('❌ 프린트 오류:', printError);
-          alert('인쇄 중 오류 발생: ' + (printError as Error).message);
         } finally {
           setPrinting(false);
         }
@@ -116,7 +113,7 @@ export default function Home() {
                 htmlFor="number"
                 className="block text-sm font-semibold text-gray-700 mb-3"
               >
-                돌 무게 선택 (1-100g)
+                돌 무게 선택 (1g ~ 10^10g)
               </label>
               <select
                 id="number"
@@ -125,9 +122,9 @@ export default function Home() {
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-lg"
                 disabled={loading}
               >
-                {Array.from({ length: 100 }, (_, i) => i + 1).map((num) => (
+                {[1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000].map((num) => (
                   <option key={num} value={num}>
-                    {num}g
+                    {num.toLocaleString()}g
                   </option>
                 ))}
               </select>
