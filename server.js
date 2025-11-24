@@ -21,7 +21,7 @@ app.use(express.static('.'));
 
 // OS 감지
 const isWindows = os.platform() === 'win32';
-const PRINTER_NAME = 'BIXOLON_SRP_330II';
+const PRINTER_NAME = 'BIXOLON SRP-330II';
 
 // 프린터 상태 확인 (OS별 명령어)
 app.get('/printer-status', async (req, res) => {
