@@ -17,8 +17,8 @@ export default function Home() {
   const [printing, setPrinting] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
 
-  // 인쇄 설정 (71mm x 426mm @ 300 DPI)
-  const [printWidth, setPrintWidth] = useState<number>(832); // 71mm = 832px @ 300 DPI
+  // 인쇄 설정 (영수증 용지 71mm 폭)
+  const [printWidthMm, setPrintWidthMm] = useState<number>(71); // 71mm (영수증 용지 표준 폭)
   const [maintainAspectRatio, setMaintainAspectRatio] = useState<boolean>(true);
   const [printQuality, setPrintQuality] = useState<number>(90);
   const [grayscale, setGrayscale] = useState<boolean>(true);
@@ -55,7 +55,7 @@ export default function Home() {
           const printPayload = {
             imageUrl: data.imageUrl,
             weight: selectedNumber,
-            width: printWidth,
+            widthMm: printWidthMm, // 밀리미터 단위로 전송
             maintainAspectRatio: maintainAspectRatio,
             quality: printQuality,
             grayscale: grayscale,

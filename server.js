@@ -53,11 +53,15 @@ app.post('/print', async (req, res) => {
     const {
         imageUrl,
         weight,
-        width = 832,                    // 기본값: 832px (71mm @ 300 DPI)
+        widthMm = 71,                   // 기본값: 71mm (영수증 용지 표준 폭)
         maintainAspectRatio = true,     // 기본값: 비율 유지
         quality = 90,                   // 기본값: 90% 품질
         grayscale = true                // 기본값: 흑백 변환
     } = req.body;
+
+    // 밀리미터를 픽셀로 변환 (203 DPI = 영수증 프린터 표준 해상도)
+    // 71mm @ 203 DPI = 567px
+    const width = Math.round(widthMm * 203 / 25.4);
 
     if (!imageUrl || !weight) {
         console.log('❌ 검증 실패 - imageUrl:', imageUrl, 'weight:', weight);
@@ -69,7 +73,7 @@ app.post('/print', async (req, res) => {
 
     try {
         console.log('🖨️ 이미지 다운로드 시작:', imageUrl);
-        console.log('⚙️ 인쇄 설정:', { width, maintainAspectRatio, quality, grayscale });
+        console.log('⚙️ 인쇄 설정:', { widthMm, width, maintainAspectRatio, quality, grayscale });
 
         // 이미지 다운로드
         const response = await axios.get(imageUrl, {
@@ -105,14 +109,14 @@ app.post('/print', async (req, res) => {
         let printCommand;
         if (isWindows) {
             // Windows: PowerShell로 프린터에 RAW 데이터 전송
-            // Sharp에서 이미 71mm(832px @ 300 DPI)로 리사이즈 완료
+            // Sharp에서 이미 71mm(567px @ 203 DPI)로 리사이즈 완료
             // 프린터가 실제 크기로 인쇄하도록 설정
             const escapedPath = tempFile.replace(/\\/g, '\\\\');
             printCommand = `powershell -Command "Add-Type -AssemblyName System.Drawing; Add-Type -AssemblyName System.Printing; $img = [System.Drawing.Image]::FromFile('${escapedPath}'); $printDoc = New-Object System.Drawing.Printing.PrintDocument; $printDoc.PrinterSettings.PrinterName = '${PRINTER_NAME}'; $printDoc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0,0,0,0); $printDoc.add_PrintPage({ param($sender, $ev); $ev.Graphics.DrawImage($img, 0, 0, $img.Width, $img.Height); $ev.HasMorePages = $false }); $printDoc.Print(); $img.Dispose()"`;
         } else {
             // macOS/Linux: lp 명령어로 프린트
-            // 용지 크기: 71mm x 426mm (2.8 x 16.77 inches)
-            printCommand = `lp -d "${PRINTER_NAME}" -o fit-to-page -o media=Custom.71x426mm "${tempFile}"`;
+            // 용지 크기는 동적으로 설정 (widthMm x 자동 높이)
+            printCommand = `lp -d "${PRINTER_NAME}" -o fit-to-page -o media=Custom.${widthMm}x426mm "${tempFile}"`;
         }
         console.log('🖨️ 실행 명령:', printCommand);
 
