@@ -62,7 +62,8 @@ export default function Home() {
           };
           console.log('📦 프린트 요청 데이터:', printPayload);
 
-          const printResponse = await fetch('http://localhost:3001/print', {
+          const printServerUrl = process.env.NEXT_PUBLIC_PRINT_SERVER_URL || 'http://localhost:3001';
+          const printResponse = await fetch(`${printServerUrl}/print`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
