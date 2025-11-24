@@ -104,8 +104,11 @@ app.post('/print', async (req, res) => {
         // OS별 프린트 명령어
         let printCommand;
         if (isWindows) {
-            // Windows: rundll32로 직접 프린터에 전송
-            printCommand = `rundll32.exe shimgvw.dll,ImageView_PrintTo /pt "${tempFile}" "${PRINTER_NAME}"`;
+            // Windows: PowerShell로 프린터에 RAW 데이터 전송
+            // Sharp에서 이미 71mm(832px @ 300 DPI)로 리사이즈 완료
+            // 프린터가 실제 크기로 인쇄하도록 설정
+            const escapedPath = tempFile.replace(/\\/g, '\\\\');
+            printCommand = `powershell -Command "Add-Type -AssemblyName System.Drawing; Add-Type -AssemblyName System.Printing; $img = [System.Drawing.Image]::FromFile('${escapedPath}'); $printDoc = New-Object System.Drawing.Printing.PrintDocument; $printDoc.PrinterSettings.PrinterName = '${PRINTER_NAME}'; $printDoc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0,0,0,0); $printDoc.add_PrintPage({ param($sender, $ev); $ev.Graphics.DrawImage($img, 0, 0, $img.Width, $img.Height); $ev.HasMorePages = $false }); $printDoc.Print(); $img.Dispose()"`;
         } else {
             // macOS/Linux: lp 명령어로 프린트
             // 용지 크기: 71mm x 426mm (2.8 x 16.77 inches)
