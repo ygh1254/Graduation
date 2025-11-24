@@ -59,9 +59,9 @@ app.post('/print', async (req, res) => {
         grayscale = true                // 기본값: 흑백 변환
     } = req.body;
 
-    // 밀리미터를 픽셀로 변환 (203 DPI = 영수증 프린터 표준 해상도)
-    // 71mm @ 203 DPI = 567px
-    const width = Math.round(widthMm * 203 / 25.4);
+    // 밀리미터를 픽셀로 변환 (180 DPI = 프린터 실제 해상도)
+    // 71mm @ 180 DPI = 504px
+    const width = Math.round(widthMm * 180 / 25.4);
 
     if (!imageUrl || !weight) {
         console.log('❌ 검증 실패 - imageUrl:', imageUrl, 'weight:', weight);
@@ -109,7 +109,7 @@ app.post('/print', async (req, res) => {
         let printCommand;
         if (isWindows) {
             // Windows: PowerShell로 프린터에 RAW 데이터 전송
-            // Sharp에서 이미 71mm(567px @ 203 DPI)로 리사이즈 완료
+            // Sharp에서 이미 71mm(504px @ 180 DPI)로 리사이즈 완료
             // 프린터가 실제 크기로 인쇄하도록 설정
             const escapedPath = tempFile.replace(/\\/g, '\\\\');
             printCommand = `powershell -Command "Add-Type -AssemblyName System.Drawing; Add-Type -AssemblyName System.Printing; $img = [System.Drawing.Image]::FromFile('${escapedPath}'); $printDoc = New-Object System.Drawing.Printing.PrintDocument; $printDoc.PrinterSettings.PrinterName = '${PRINTER_NAME}'; $printDoc.DefaultPageSettings.Margins = New-Object System.Drawing.Printing.Margins(0,0,0,0); $printDoc.add_PrintPage({ param($sender, $ev); $ev.Graphics.DrawImage($img, 0, 0, $img.Width, $img.Height); $ev.HasMorePages = $false }); $printDoc.Print(); $img.Dispose()"`;
