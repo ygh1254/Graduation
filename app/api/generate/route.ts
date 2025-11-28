@@ -7,9 +7,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { number } = body;
 
-    if (!number || number < 1 || number > 100) {
+    // 허용된 무게 값 (1g ~ 10^10g)
+    const allowedWeights = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000];
+    if (!number || !allowedWeights.includes(number)) {
       return NextResponse.json(
-        { success: false, error: '1-100 사이의 번호를 선택해주세요' },
+        { success: false, error: 'Please select a valid weight (1g to 10,000,000,000g)' },
         { status: 400 }
       );
     }

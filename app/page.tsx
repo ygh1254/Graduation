@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 
 interface GenerationResult {
   success: boolean;
@@ -11,20 +10,30 @@ interface GenerationResult {
   error?: string;
 }
 
+// 무게 옵션 (graduation과 동일: 1g ~ 10^10g)
+const WEIGHT_OPTIONS = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000];
+
+// 마키 이미지 (1~17)
+const MARQUEE_IMAGES = Array.from({ length: 17 }, (_, i) => `/image/${i + 1}.png`);
+
 export default function Home() {
-  const [selectedNumber, setSelectedNumber] = useState<number>(1);
+  const [selectedNumber, setSelectedNumber] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
   const [printing, setPrinting] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
 
   // 인쇄 설정 (영수증 용지 71mm 폭)
-  const [printWidthMm, setPrintWidthMm] = useState<number>(71); // 71mm (영수증 용지 표준 폭)
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState<boolean>(true);
-  const [printQuality, setPrintQuality] = useState<number>(90);
-  const [grayscale, setGrayscale] = useState<boolean>(true);
+  const printWidthMm = 71;
+  const maintainAspectRatio = true;
+  const printQuality = 90;
+  const grayscale = true;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    if (!selectedNumber) {
+      alert('Select the weight of the stone.');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
@@ -46,21 +55,17 @@ export default function Home() {
       // 2. 이미지 생성 성공 시 자동으로 프린트 시작
       if (data.success && data.imageUrl) {
         console.log('✅ 이미지 생성 완료, 자동 프린트 시작...');
-        console.log('📤 전송할 이미지 URL:', data.imageUrl);
-        console.log('📤 전송할 무게:', selectedNumber);
         setPrinting(true);
 
         try {
-          // Express 서버(포트 3001)로 프린트 요청
           const printPayload = {
             imageUrl: data.imageUrl,
             weight: selectedNumber,
-            widthMm: printWidthMm, // 밀리미터 단위로 전송
+            widthMm: printWidthMm,
             maintainAspectRatio: maintainAspectRatio,
             quality: printQuality,
             grayscale: grayscale,
           };
-          console.log('📦 프린트 요청 데이터:', printPayload);
 
           const printServerUrl = process.env.NEXT_PUBLIC_PRINT_SERVER_URL || 'http://localhost:3001';
           const printResponse = await fetch(`${printServerUrl}/print`, {
@@ -87,88 +92,77 @@ export default function Home() {
     } catch (error) {
       setResult({
         success: false,
-        error: '오류가 발생했습니다: ' + (error as Error).message,
+        error: 'Error occurred: ' + (error as Error).message,
       });
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 p-4">
-      <div className="max-w-4xl mx-auto py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            건설 작업자 이미지 생성기
-          </h1>
-          <p className="text-lg text-gray-600">
-            무게(1-100g)를 선택하면 작업자가 돌을 드는 3D 이미지를 생성합니다
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="number"
-                className="block text-sm font-semibold text-gray-700 mb-3"
-              >
-                돌 무게 선택 (1g ~ 10^10g)
-              </label>
-              <select
-                id="number"
-                value={selectedNumber}
-                onChange={(e) => setSelectedNumber(Number(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white text-lg"
-                disabled={loading}
-              >
-                {[1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000].map((num) => (
-                  <option key={num} value={num}>
-                    {num.toLocaleString()}g
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-gray-500 mt-2">
-                💡 무게에 따라 작업자의 동작이 달라집니다
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-6 rounded-xl font-semibold text-lg hover:from-purple-700 hover:to-blue-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  이미지 생성 중...
-                </span>
-              ) : (
-                '🏗️ 이미지 생성하기'
-              )}
-            </button>
-          </form>
+    <>
+      {/* 마키 (왼쪽 이미지 갤러리) */}
+      <div className="marquee-container">
+        <div className="marquee-content">
+          {/* 이미지를 두 번 반복하여 무한 스크롤 효과 */}
+          {[...MARQUEE_IMAGES, ...MARQUEE_IMAGES].map((src, index) => (
+            <img key={index} src={src} alt={`Sample ${(index % 17) + 1}`} />
+          ))}
         </div>
       </div>
-    </div>
+
+      {/* 메인 컨텐츠 */}
+      <div className="main-content">
+        <h1>The exemplary posture of the operator Sisyphus</h1>
+
+        <p>
+          <span>
+            1. Access the site via the QR code.<br />
+            2. Select a stone weight from 1g to 10,000,000,000g.<br />
+            3. Image generation takes time. Please wait approximately 30 seconds.<br />
+            4. Appreciate the exemplary posture of Sisyphus, the worker effortlessly moving the stone.
+          </span>
+        </p>
+
+        {/* 드롭다운과 버튼 */}
+        <div className="form-row">
+          <select
+            value={selectedNumber}
+            onChange={(e) => setSelectedNumber(e.target.value ? Number(e.target.value) : '')}
+            disabled={loading}
+          >
+            <option value="" disabled>Select the weight of the stone.</option>
+            {WEIGHT_OPTIONS.map((weight) => (
+              <option key={weight} value={weight}>
+                {weight.toLocaleString()}g
+              </option>
+            ))}
+          </select>
+          <button onClick={handleSubmit} disabled={loading || printing}>
+            {loading ? 'Generating...' : printing ? 'Printing...' : 'Generate'}
+          </button>
+        </div>
+
+        {/* 결과 표시 영역 */}
+        {result && result.success && (
+          <div className="result-area">
+            <p style={{ fontWeight: 'bold' }}>Generated Prompt:</p>
+            <p className="prompt-text">{result.prompt}</p>
+            <p style={{ fontWeight: 'bold', marginTop: '20px' }}>Generated Image:</p>
+            <img
+              className="generated-image"
+              src={result.imageUrl}
+              alt="Generated Sisyphus"
+            />
+          </div>
+        )}
+
+        {result && !result.success && (
+          <div className="result-area">
+            <p style={{ color: 'red' }}>Error: {result.error}</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
