@@ -171,3 +171,73 @@ marquee img {
   object-fit: cover;
   display: block;
 }
+
+/* 모바일 반응형 (768px 이하) */
+@media (max-width: 768px) {
+  body {
+    height: auto;
+    min-height: 100vh;
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 20px;
+    margin-top: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+    padding: 0 10px;
+  }
+
+  p {
+    width: 100%;
+    max-width: 90vw;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .form-row {
+    flex-direction: column;
+    width: 100%;
+    max-width: 90vw;
+    gap: 10px;
+  }
+
+  .form-row select {
+    width: 100%;
+    min-width: unset;
+    margin-right: 0;
+  }
+
+  .form-row button {
+    width: 100%;
+  }
+
+  marquee {
+    width: 150px;
+    height: 150px;
+  }
+
+  marquee img {
+    width: 150px;
+    height: 150px;
+  }
+}
+
+/* 아주 작은 화면 (480px 이하) */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 16px;
+    margin-top: 20px;
+  }
+
+  p {
+    font-size: 12px;
+    padding: 15px;
+  }
+
+  select, button {
+    font-size: 14px;
+    padding: 8px 15px;
+  }
+}
