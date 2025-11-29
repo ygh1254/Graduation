@@ -12,7 +12,7 @@ export default function Home() {
   const [selectedNumber, setSelectedNumber] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
   const [printing, setPrinting] = useState(false);
-  const [completedWeight, setCompletedWeight] = useState<number | null>(1); // TODO: 테스트 후 null로 변경
+  const [completedWeight, setCompletedWeight] = useState<number | null>(null);
 
   // 인쇄 설정 (영수증 용지 71mm 폭)
   const printWidthMm = 71;
