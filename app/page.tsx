@@ -12,7 +12,7 @@ export default function Home() {
   const [selectedNumber, setSelectedNumber] = useState<number | ''>('');
   const [loading, setLoading] = useState(false);
   const [printing, setPrinting] = useState(false);
-  const [completedWeight, setCompletedWeight] = useState<number | null>(null);
+  const [completedWeight, setCompletedWeight] = useState<number | null>(1); // TODO: 테스트 후 null로 변경
 
   // 인쇄 설정 (영수증 용지 71mm 폭)
   const printWidthMm = 71;
@@ -119,14 +119,11 @@ export default function Home() {
       </marquee>
 
       <h1>The exemplary posture of the operator Sisyphus</h1>
-      <br />
 
       {/* 프린트 완료 시 결과 메시지, 아니면 설명 텍스트 */}
       {completedWeight !== null ? (
-        <p>
-          <span>
-            The pose of moving the {completedWeight.toLocaleString()}g stone lightly is completed.
-          </span>
+        <p className="completion-message">
+          The pose of moving the {completedWeight.toLocaleString()}g stone lightly is completed.
         </p>
       ) : (
         <p>
