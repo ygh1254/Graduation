@@ -2,6 +2,19 @@
 
 import { useState } from 'react';
 
+// marquee 태그 타입 선언
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      marquee: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
+        direction?: string;
+        behavior?: string;
+        scrollamount?: string;
+      }, HTMLElement>;
+    }
+  }
+}
+
 interface GenerationResult {
   success: boolean;
   prompt?: string;
@@ -101,68 +114,66 @@ export default function Home() {
 
   return (
     <>
-      {/* 마키 (왼쪽 이미지 갤러리) */}
-      <div className="marquee-container">
-        <div className="marquee-content">
-          {/* 이미지를 두 번 반복하여 무한 스크롤 효과 */}
-          {[...MARQUEE_IMAGES, ...MARQUEE_IMAGES].map((src, index) => (
-            <img key={index} src={src} alt={`Sample ${(index % 17) + 1}`} />
-          ))}
-        </div>
-      </div>
-
-      {/* 메인 컨텐츠 */}
-      <div className="main-content">
-        <h1>The exemplary posture of the operator Sisyphus</h1>
-
-        <p>
-          <span>
-            1. Access the site via the QR code.<br />
-            2. Select a stone weight from 1g to 10,000,000,000g.<br />
-            3. Image generation takes time. Please wait approximately 30 seconds.<br />
-            4. Appreciate the exemplary posture of Sisyphus, the worker effortlessly moving the stone.
+      {/* 마키 (원본과 동일한 marquee 태그 사용) */}
+      <marquee direction="up">
+        {MARQUEE_IMAGES.map((src, index) => (
+          <span key={index}>
+            <img src={src} width="200" alt={`Sample ${index + 1}`} />
+            <br />
           </span>
-        </p>
+        ))}
+      </marquee>
 
-        {/* 드롭다운과 버튼 */}
-        <div className="form-row">
-          <select
-            value={selectedNumber}
-            onChange={(e) => setSelectedNumber(e.target.value ? Number(e.target.value) : '')}
-            disabled={loading}
-          >
-            <option value="" disabled>Select the weight of the stone.</option>
-            {WEIGHT_OPTIONS.map((weight) => (
-              <option key={weight} value={weight}>
-                {weight.toLocaleString()}g
-              </option>
-            ))}
-          </select>
-          <button onClick={handleSubmit} disabled={loading || printing}>
-            {loading ? 'Generating...' : printing ? 'Printing...' : 'Generate'}
-          </button>
-        </div>
+      <h1>The exemplary posture of the operator Sisyphus</h1>
+      <br />
 
-        {/* 결과 표시 영역 */}
-        {result && result.success && (
-          <div className="result-area">
-            <p style={{ fontWeight: 'bold' }}>Generated Prompt:</p>
-            <p className="prompt-text">{result.prompt}</p>
-            <p style={{ fontWeight: 'bold', marginTop: '20px' }}>Generated Image:</p>
-            <img
-              className="generated-image"
-              src={result.imageUrl}
-              alt="Generated Sisyphus"
-            />
-          </div>
-        )}
+      <p>
+        <span>
+          1. Access the site via the QR code.<br />
+          2. Select a stone weight from 1g to 10,000,000,000g.<br />
+          3. Image generation takes time. Please wait approximately 30 seconds.<br />
+          4. Appreciate the exemplary posture of Sisyphus, the worker effortlessly moving the stone.
+        </span>
+      </p>
 
-        {result && !result.success && (
-          <div className="result-area">
-            <p style={{ color: 'red' }}>Error: {result.error}</p>
-          </div>
-        )}
+      {/* 드롭다운과 버튼 */}
+      <div className="form-row">
+        <select
+          value={selectedNumber}
+          onChange={(e) => setSelectedNumber(e.target.value ? Number(e.target.value) : '')}
+          disabled={loading}
+        >
+          <option value="" disabled>Select the weight of the stone.</option>
+          {WEIGHT_OPTIONS.map((weight) => (
+            <option key={weight} value={weight}>
+              {weight.toLocaleString()}g
+            </option>
+          ))}
+        </select>
+        <button onClick={handleSubmit} disabled={loading || printing}>
+          {loading ? 'Generating...' : printing ? 'Printing...' : 'Generate'}
+        </button>
       </div>
+
+      {/* 결과 표시 영역 */}
+      {result && result.success && (
+        <div className="result-area">
+          <p style={{ fontWeight: 'bold' }}>Generated Prompt:</p>
+          <p className="prompt-text">{result.prompt}</p>
+          <p style={{ fontWeight: 'bold', marginTop: '20px' }}>Generated Image:</p>
+          <img
+            className="generated-image"
+            src={result.imageUrl}
+            alt="Generated Sisyphus"
+          />
+        </div>
+      )}
+
+      {result && !result.success && (
+        <div className="result-area">
+          <p style={{ color: 'red' }}>Error: {result.error}</p>
+        </div>
+      )}
     </>
   );
 }

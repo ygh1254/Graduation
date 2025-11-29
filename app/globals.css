@@ -1,15 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Diphylleia&family=Grandiflora+One&family=Moirai+One&family=Noto+Sans+KR:wght@100..900&family=Noto+Serif+KR:wght@400;700&family=Staatliches&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.staatliches-regular {
   font-family: "Staatliches", sans-serif;
-}
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+  font-weight: 400;
+  font-style: normal;
 }
 
 body {
@@ -23,16 +17,15 @@ body {
   line-height: 1.8;
   word-break: keep-all;
   background-color: rgb(255, 255, 255);
-  min-height: 100vh;
+  background-size: 25%;
+  height: 90vh;
 }
 
 h1 {
   font-family: "Staatliches", sans-serif;
-  font-size: clamp(18px, 5vw, 25px);
-  margin-top: 40px;
-  margin-bottom: 30px;
-  text-align: center;
-  padding: 0 10px;
+  font-size: 25px;
+  margin-top: 60px;
+  margin-bottom: 40px;
 }
 
 h3 {
@@ -45,31 +38,31 @@ h3 {
 p {
   font-family: "Staatliches", sans-serif;
   position: relative;
-  bottom: 32px;
   line-height: 2;
-  width: min(450px, 90vw);
-  max-height: 600px;
+  width: 510px;
+  max-width: 90vw;
   margin-top: 10px;
-  margin-bottom: 10px;
-  overflow: auto;
-  padding: clamp(16px, 4vw, 32px);
-  padding-top: 10px;
-  padding-bottom: 10px;
+  margin-bottom: 30px;
+  padding: 30px;
   border: dashed 1px;
+  text-align: left;
+  box-sizing: border-box;
 }
 
 button {
   font-family: "Staatliches", sans-serif;
-  font-size: clamp(16px, 4vw, 20px);
+  font-size: 20px;
   color: white;
   background-color: black;
   border: none;
   margin-top: 0px;
-  padding: 10px clamp(15px, 4vw, 30px);
+  padding: 10px 30px;
   cursor: pointer;
   display: inline-block;
   vertical-align: top;
-  white-space: nowrap;
+  width: 110px;
+  box-sizing: border-box;
+  text-align: center;
 }
 
 button:disabled {
@@ -84,8 +77,7 @@ select {
   padding: 10px 20px;
   font-family: "Staatliches", sans-serif;
   font-size: 16px;
-  width: auto;
-  min-width: min(375px, 60vw);
+  width: 390px;
   margin-right: 10px;
   display: inline-block;
   vertical-align: top;
@@ -95,6 +87,7 @@ select {
   background-repeat: no-repeat;
   background-position: right 10px center;
   padding-right: 35px;
+  box-sizing: border-box;
 }
 
 select:hover {
@@ -106,13 +99,13 @@ select:focus {
   border: solid 2px black;
 }
 
+/* 결과 영역 스타일 */
 .result-area {
   margin-top: 30px;
-  padding: clamp(10px, 3vw, 20px);
+  padding: 20px;
   background-color: white;
   border: dashed 1px;
-  max-width: min(700px, 90vw);
-  width: 100%;
+  max-width: 700px;
 }
 
 .result-area p {
@@ -122,142 +115,59 @@ select:focus {
   border: none;
   padding: 5px;
   margin: 5px 0;
+  bottom: 0;
 }
 
 .prompt-text {
-  background-color: #f5f5f5;
-  padding: 15px;
-  border: dashed 1px;
+  background-color: #f5f5f5 !important;
+  padding: 15px !important;
+  border: dashed 1px !important;
   font-family: monospace;
   word-break: break-all;
-  font-size: clamp(10px, 2.5vw, 14px);
 }
 
 .generated-image {
   display: block;
   margin: 20px auto;
-  width: min(300px, 80vw);
-  height: auto;
-  max-height: 80vh;
+  width: 300px;
+  height: 1800px;
   object-fit: contain;
-}
-
-.marquee-container {
-  position: fixed;
-  left: 20px;
-  top: 0;
-  height: 100vh;
-  width: clamp(100px, 15vw, 200px);
-  overflow: hidden;
-}
-
-.marquee-content {
-  display: flex;
-  flex-direction: column;
-  animation: marquee-up 30s linear infinite;
-}
-
-.marquee-content img {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-@keyframes marquee-up {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(-50%);
-  }
-}
-
-.main-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 90vh;
-  width: 100%;
-  padding: 0 10px;
-}
-
-.description {
-  font-family: "Staatliches", sans-serif;
-  position: relative;
-  line-height: 2;
-  width: min(450px, 90vw);
-  margin-top: 10px;
-  margin-bottom: 10px;
-  padding: clamp(16px, 4vw, 32px);
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border: dashed 1px;
+  max-width: 100%;
 }
 
 .form-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  width: 510px;
+  max-width: 90vw;
+  box-sizing: border-box;
+}
+
+.form-row select {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.form-row button {
+  flex-shrink: 0;
+  width: 110px;
+  text-align: center;
+  display: flex;
   justify-content: center;
+  align-items: center;
 }
 
-/* 모바일 반응형 (768px 이하) */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
-  }
-
-  h1 {
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-
-  p {
-    bottom: 0;
-    font-size: 14px;
-    line-height: 1.8;
-  }
-
-  .marquee-container {
-    display: none;
-  }
-
-  .form-row {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  select {
-    width: 100%;
-    min-width: unset;
-    margin-right: 0;
-    margin-bottom: 10px;
-  }
-
-  button {
-    width: 100%;
-  }
-
-  .generated-image {
-    width: 90vw;
-    max-height: 70vh;
-  }
+/* 마키 스타일 - 정사각형 */
+marquee {
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
 }
 
-/* 아주 작은 화면 (480px 이하) */
-@media (max-width: 480px) {
-  h1 {
-    font-size: 16px;
-  }
-
-  p {
-    font-size: 12px;
-    padding: 12px;
-  }
-
-  select, button {
-    font-size: 14px;
-    padding: 8px 15px;
-  }
+marquee img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  display: block;
 }
