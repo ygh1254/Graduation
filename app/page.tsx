@@ -2,19 +2,6 @@
 
 import { useState } from 'react';
 
-// marquee 태그 타입 선언
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      marquee: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        direction?: string;
-        behavior?: string;
-        scrollamount?: string;
-      }, HTMLElement>;
-    }
-  }
-}
-
 // 무게 옵션 (graduation과 동일: 1g ~ 10^10g)
 const WEIGHT_OPTIONS = [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000];
 
