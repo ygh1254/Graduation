@@ -178,6 +178,8 @@ marquee img {
     height: auto;
     min-height: 100vh;
     padding: 10px;
+    justify-content: flex-start;
+    padding-top: 30px;
   }
 
   h1 {
